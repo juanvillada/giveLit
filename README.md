@@ -266,18 +266,8 @@ Articles are grouped per journal and interleaved to guarantee that every request
 - Returned metadata (title, authors, abstract, DOI, relevance score) is normalised and stored locally in memory only.
 - Europe PMC requires no API keys, but we ship a descriptive `User-Agent` so that traffic is easy to attribute.
 
-## Project layout
+# Contributing
 
-- `src/radarsci/cli.py` - Typer command definition and orchestration.
-- `src/radarsci/fetcher.py` - Europe PMC queries and response normalisation.
-- `src/radarsci/relevance.py` - Relevance scoring heuristics.
-- `src/radarsci/reporting.py` - Rich terminal table and HTML rendering.
-- `pixi.toml` - Environment + task configuration.
-
-## Notes
-
-- The CLI uses a rich progress bar while contacting Europe PMC; network access is required.
-- HTML reports are self-contained and easy to share.
 - The project stays Python-only for maximum portability. Contributions are welcome!
 
 ## Contact
