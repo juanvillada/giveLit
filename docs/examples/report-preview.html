@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>RadarSci Report</title>
+    <style>
+        :root {
+            --bg: #040404;
+            --text: #7fffb3;
+            --accent: #00ff90;
+            --muted: #3ddc84;
+            --journal: #b8ffd6;
+            --border: rgba(0, 255, 144, 0.35);
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+            max-width: 880px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+            letter-spacing: 0.03em;
+        }
+        .meta-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem 0;
+            column-count: 2;
+            column-gap: 1.4rem;
+        }
+        @media (max-width: 720px) {
+            .meta-list {
+                column-count: 1;
+            }
+        }
+        .meta-list li {
+            margin: 0.25rem 0;
+            color: var(--muted);
+            break-inside: avoid;
+        }
+        .journal-block {
+            column-span: all;
+            margin-top: 0.75rem;
+        }
+        .journal-block-label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--muted);
+        }
+        .journal-pill-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            align-items: center;
+        }
+        .journal-sep {
+            display: inline-flex;
+            align-items: center;
+            padding: 0 0.2rem;
+            color: var(--muted);
+            opacity: 0.55;
+            font-size: 0.95rem;
+        }
+        .journal-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            color: var(--muted);
+            background: transparent;
+            letter-spacing: 0.05em;
+        }
+        .journal-pill.hit {
+            padding: 0.2rem 0.65rem;
+            border-radius: 0.45rem;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: rgba(0, 255, 144, 0.12);
+            box-shadow: 0 0 0 1px rgba(0, 255, 144, 0.08);
+        }
+        .meta-list li.journal-item {
+            color: var(--text);
+        }
+        .summary {
+            margin-bottom: 1.8rem;
+        }
+        .summary h2 {
+            margin: 0 0 0.6rem 0;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+        .summary-plot {
+            margin: 0;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            background: rgba(0, 255, 144, 0.04);
+            color: var(--text);
+            white-space: pre;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        header.page-header {
+            margin-bottom: 2rem;
+        }
+        header.page-header h1 {
+            margin: 0 0 0.75rem 0;
+            font-size: 2rem;
+            color: var(--accent);
+        }
+        .coverage-groups {
+            margin-top: 1.5rem;
+        }
+        .coverage-heading {
+            margin: 1.6rem 0 0.6rem 0;
+            font-size: 1.3rem;
+            color: var(--accent);
+        }
+        .card {
+            padding: 1.2rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            margin-bottom: 1.1rem;
+            background: transparent;
+        }
+        .card:last-child {
+            margin-bottom: 0;
+        }
+        .card h2 {
+            margin: 0 0 0.6rem 0;
+            font-size: 1.25rem;
+            color: var(--accent);
+        }
+        .card a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .card a:hover {
+            text-decoration: underline;
+        }
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .journal {
+            color: var(--journal);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .separator {
+            color: var(--muted);
+            opacity: 0.6;
+        }
+        .score {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.6rem;
+            border: 1px solid var(--accent);
+            border-radius: 0.4rem;
+            background: rgba(0, 255, 144, 0.08);
+        }
+        .score .badge {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+        .score .value {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .age {
+            color: var(--journal);
+        }
+        .authors {
+            font-size: 0.9rem;
+            margin: 0.9rem 0 0.6rem 0;
+            color: var(--text);
+        }
+        .summary {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--muted);
+        }
+        .missing {
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        footer {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <h1>RadarSci</h1>
+        <ul class="meta-list">
+            <li>✦ Keywords: &quot;microbiome&quot;</li><li>✦ Days window: last 30 days</li><li>✦ Limit: 4</li><li>✦ Sort: Score</li><li>✦ Coverage: All</li><li>✦ Generated: 2025-11-04 17:48 UTC</li><li class="journal-block"><span class="journal-block-label">✦ Journals searched (1)</span><div class="journal-pill-wrap"><span class="journal-pill hit">Trends in Microbiology</span></div></li>
+        </ul>
+    </header>
+    <main>
+        <section class="summary"><h2>Journal summary — full coverage (all 1 keyword matched)</h2><pre class="summary-plot">Trends in Microbiology | ██████████████████ 4 papers, avg 17.16</pre></section>
+        <section class="coverage-groups"> <h2 class="coverage-heading">Full coverage (all 1 keyword matched)</h2> <article class="card">
+            <header>
+                <h2><a href="https://doi.org/10.1016/j.tim.2025.10.009" target="_blank" rel="noopener">Mangrove microbiomes as hidden ecological gatekeepers.</a></h2>
+                <div class="meta">
+                    <span class="journal">Journal: Trends in Microbiology</span>
+                    <span class="separator">|</span>
+                    <span class="date">Tuesday, 2025-10-28</span>
+                    <span class="separator">|</span>
+                    <span class="age">Days ago: 7</span>
+                    <span class="separator">|</span>
+                    <span class="score"><span class="badge">RadarSci score</span><span class="value">22.60</span></span>
+                </div>
+            </header>
+            <p class="authors">Tabugo SR.</p>
+            <p class="summary">Mangroves are known worldwide but their concealed network of microbiomes is poorly understood. Huang et al., on genomic indicators, Siblos and Tabugo&#x27;s 16S rRNA sequencing of the mangrove microbiome, and Dechavez et al.&#x27;s culture-dependent survey collectively highlight the ecological significance of mangroves, their conservation potential, and their role as key ecological gatekeepers.</p>
+        </article> <article class="card">
+            <header>
+                <h2><a href="https://doi.org/10.1016/j.tim.2025.08.007" target="_blank" rel="noopener">Navigating trust and science: microbiome research in the Amazon.</a></h2>
+                <div class="meta">
+                    <span class="journal">Journal: Trends in Microbiology</span>
+                    <span class="separator">|</span>
+                    <span class="date">Wednesday, 2025-10-08</span>
+                    <span class="separator">|</span>
+                    <span class="age">Days ago: 27</span>
+                    <span class="separator">|</span>
+                    <span class="score"><span class="badge">RadarSci score</span><span class="value">18.24</span></span>
+                </div>
+            </header>
+            <p class="authors">Tito RY, Obregon-Tito AJ, Meza-Sánchez G, Vela-Collantes D, Lewis CM, Raes J.</p>
+            <p class="summary">Including Indigenous Peoples in microbiome research is both a scientific imperative and an ethical responsibility. Our long-standing partnership with the Matsés Peoples from the Peruvian Amazon provided scientific insights in microbial profiles that have coevolved with humans, studies only possible via trust-based ethical partnerships. Community-based participatory research (CBPR) is essential to navigate mistrust rooted in historical injustices. We present our experience implementing culturally informed protocols and equitable benefit-sharing as cornerstones of respectful, inclusive microbiome research with Peruvian Indigenous Peoples. This approach fosters sustainable research partnerships grounded in reciprocal trust and mutual benefit.</p>
+        </article> <article class="card">
+            <header>
+                <h2><a href="https://doi.org/10.1016/j.tim.2025.10.005" target="_blank" rel="noopener">Unraveling microbiome integration in soil transplant.</a></h2>
+                <div class="meta">
+                    <span class="journal">Journal: Trends in Microbiology</span>
+                    <span class="separator">|</span>
+                    <span class="date">Wednesday, 2025-10-22</span>
+                    <span class="separator">|</span>
+                    <span class="age">Days ago: 13</span>
+                    <span class="separator">|</span>
+                    <span class="score"><span class="badge">RadarSci score</span><span class="value">16.19</span></span>
+                </div>
+            </header>
+            <p class="authors">Shan S.</p>
+            <p class="summary">Little is known about the processes that drive microbial community merging and development in transplanted soils. A recent study by Causevic et al. disentangled the relative contribution of habitat filtering and microbiota taxa origin in shaping transplant outcomes, providing valuable insights for advancing microbial engineering.</p>
+        </article> <article class="card">
+            <header>
+                <h2><a href="https://doi.org/10.1016/j.tim.2025.10.001" target="_blank" rel="noopener">From structure to immunity: how skin shapes age-related vulnerability to Chikungunya virus infections.</a></h2>
+                <div class="meta">
+                    <span class="journal">Journal: Trends in Microbiology</span>
+                    <span class="separator">|</span>
+                    <span class="date">Tuesday, 2025-10-28</span>
+                    <span class="separator">|</span>
+                    <span class="age">Days ago: 7</span>
+                    <span class="separator">|</span>
+                    <span class="score"><span class="badge">RadarSci score</span><span class="value">11.60</span></span>
+                </div>
+            </header>
+            <p class="authors">Neo VK, Fong SW, Ng LFP.</p>
+            <p class="summary">Arboviral diseases are resurging globally, with Chikungunya virus (CHIKV) demonstrating a troubling capacity for large-scale outbreaks. In 2024, CHIKV re-emerged in Réunion Island with 47 500 cases and 12 deaths reported by May 2025. Notably, infants and the elderly were disproportionately affected, two age groups with distinct and underexplored vulnerabilities in immune defense, particularly at the skin. As the skin is the primary site of CHIKV inoculation and a key immunological barrier, age-dependent changes in the skin likely influence infection outcomes. Yet, it remains an overlooked target for intervention. This review explores how developmental and aging-associated alterations in the skin&#x27;s structure, immune composition, and the microbiome shape arboviral pathogenesis, with a particular emphasis on CHIKV, and guides research toward age-tailored interventions for vulnerable populations.</p>
+        </article> </section>
+    </main>
+    <footer>
+        Crafted with RadarSci — a radar for scientific literature.
+    </footer>
+</body>
+</html>

@@ -21,6 +21,83 @@ pixi run radarsci --help
 pixi run radarsci
 ```
 
+## Example outputs
+
+```text
+$ pixi run radarsci --keyword metagenomics --journal "Nature Microbiology" --limit 2 --days 30
+
+RadarSci — a radar for scientific literature
+✦ Keywords: "metagenomics"                  ✦ Days window: last 30 days
+✦ Limit: 2                                  ✦ Sort: Score
+✦ Coverage: All                             ✦ Journals searched (1) [Nature Microbiology]
+
+                      Full coverage (all 1 keyword matched)
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━┓
+┃ Journal          ┃ Title                                ┃ Date                 ┃ RadarSci   ┃ Days  ┃
+┃                  ┃                                      ┃                      ┃ score      ┃ ago   ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━┩
+│ Nature Microbio...│ Long-read metagenomics for strain   │ Wednesday, 2025-10-22│ 18.69      │ 13    │
+│                  │ tracking after faecal microbiota     │                      │            │       │
+│                  │ transplant.                          │                      │            │       │
+├──────────────────┼──────────────────────────────────────┼──────────────────────┼────────────┼───────┤
+│ Nature Microbio...│ Human immunodeficiency virus and    │ Thursday, 2025-10-30 │ 12.17      │ 5     │
+│                  │ antiretroviral therapies exert       │                      │            │       │
+│                  │ distinct influences across diverse   │                      │            │       │
+│                  │ gut microbiomes.                     │                      │            │       │
+└──────────────────┴──────────────────────────────────────┴──────────────────────┴────────────┴───────┘
+```
+
+Peek at the neon HTML cards by opening `docs/examples/report-preview.html` in a browser. The cards look like:
+
+```html
+<article class="card">
+  <header>
+    <h2>
+      <a href="https://doi.org/10.1016/j.tim.2025.10.009" target="_blank" rel="noopener">
+        Mangrove microbiomes as hidden ecological gatekeepers.
+      </a>
+    </h2>
+    <div class="meta">
+      <span class="journal">Journal: Trends in Microbiology</span>
+      <span class="separator">|</span>
+      <span class="date">Tuesday, 2025-10-28</span>
+      <span class="separator">|</span>
+      <span class="age">Days ago: 7</span>
+      <span class="separator">|</span>
+      <span class="score">
+        <span class="badge">RadarSci score</span>
+        <span class="value">22.60</span>
+      </span>
+    </div>
+  </header>
+  <p class="authors">Tabugo SR.</p>
+  <p class="summary">
+    Mangroves are known worldwide but their concealed network of microbiomes is poorly understood...
+  </p>
+</article>
+```
+
+## Container image
+
+The repository ships with a multi-stage `Dockerfile` that bakes the project into the latest Pixi runtime (0.59.x). Build and run locally:
+
+```bash
+docker build -t radarsci .
+docker run --rm -it radarsci --help
+```
+
+Because the entrypoint activates the Pixi environment for you, the container accepts the same arguments as the CLI:
+
+```bash
+docker run --rm radarsci --keyword "gut microbiome" --journal all --limit 10
+```
+
+Mount a host directory if you want to persist HTML reports:
+
+```bash
+docker run --rm -v "$(pwd)/outputs:/app/outputs" radarsci --format web --output outputs/report.html
+```
+
 ## Custom searches
 
 - Add more keywords by repeating `--keyword/-k`.
@@ -33,6 +110,7 @@ pixi run radarsci
 - Results always include the requested keywords; papers with zero keyword matches are filtered out automatically.
 - Use `--coverage full` when you only want papers that match every keyword.
 - Use `--skip-journal/-skip` to exclude specific journals (handy with `--journal all`).
+- Add `--include-preprints` to pull in arXiv and bioRxiv alongside the selected journals (including `--journal all`). You can also target them directly with `--journal arxiv` or `--journal biorxiv`.
 
 Example:
 
@@ -41,9 +119,8 @@ pixi run radarsci \
   --keyword metagenomics \
   --journal nature-microbiology \
   --journal cell-systems \
-  --journal science \
-  --limit 90 \
-  --days 360 \
+  --limit 10 \
+  --days 60 \
   --format web \
   --output outputs/metagenomics.html
 ```
@@ -54,12 +131,23 @@ All built-in journals in one go:
 pixi run radarsci \
   --keyword metagenomics \
   --journal all \
-  --limit 30 \
+  --limit 10 \
   --days 20 \
   --sort score \
   --coverage all \
   --format web \
   --output outputs/metagenomics.html
+```
+
+All journals plus the preprint servers for a specific topic:
+
+```bash
+pixi run radarsci \
+  --keyword "gut microbiome" \
+  --journal all \
+  --include-preprints \
+  --limit 10 \
+  --days 10
 ```
 
 ## CLI options at a glance
@@ -75,6 +163,7 @@ pixi run radarsci \
 | `--format TEXT` | Output mode: `cli` (default) or `web`. |
 | `--skip-journal/-skip TEXT` | Exclude a journal key/name from the search (repeatable). |
 | `--output PATH` | Destination for the HTML report; omit to auto-generate a timestamped file. |
+| `--include-preprints` | Add arXiv and bioRxiv to the selected journals (including `--journal all`). |
 
 ## Built-in journal keywords
 
@@ -106,6 +195,15 @@ pixi run radarsci \
 | Trends in Biotechnology            | `trends-in-biotechnology`           | Trends in Biotechnology        |
 | Trends in Ecology & Evolution      | `trends-in-ecology-evolution`       | Trends in Ecology & Evolution  |
 | Trends in Microbiology             | `trends-in-microbiology`            | Trends in Microbiology         |
+
+Optional preprint sources (enabled with `--include-preprints` or by specifying them explicitly):
+
+| Preprint server | CLI key  | Container title |
+|-----------------|----------|-----------------|
+| arXiv           | `arxiv`  | arXiv           |
+| bioRxiv         | `biorxiv`| bioRxiv         |
+
+Preprint lookups are still backed by the Europe PMC API, using the publisher feed to respect your `--days` window.
 
 ## How relevance works
 
@@ -158,4 +256,4 @@ Articles are grouped per journal and interleaved to guarantee that every request
 
 ## Contact
 
-For questions or feedback, reach out to Juan C. Villada at juanv@linux.com
+For questions or feedback, reach out to Juan at juanv@linux.com

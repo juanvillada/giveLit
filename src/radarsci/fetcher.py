@@ -68,13 +68,15 @@ def _build_query(journal: JournalConfig, keywords: Iterable[str], days_back: int
     else:
         joined = " OR ".join(quoted_terms)
         keyword_query = f"({joined})"
-    journal_clause = f'JOURNAL:"{journal.container_title}"'
+    constraint_field = getattr(journal, "constraint_field", "JOURNAL") or "JOURNAL"
+    journal_clause = f'{constraint_field}:"{journal.container_title}"'
     segments = [keyword_query, journal_clause]
 
     if days_back > 0:
         end_date = datetime.now(tz=UTC).date()
         start_date = end_date - timedelta(days=days_back)
-        segments.append(f'FIRST_PDATE:[{start_date} TO {end_date}]')
+        date_field = getattr(journal, "date_field", "FIRST_PDATE") or "FIRST_PDATE"
+        segments.append(f'{date_field}:[{start_date} TO {end_date}]')
 
     return " ".join(segments)
 

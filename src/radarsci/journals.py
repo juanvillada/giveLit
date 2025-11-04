@@ -39,6 +39,21 @@ DEFAULT_JOURNALS: Sequence[JournalConfig] = (
     JournalConfig(key="trends-in-microbiology", name="Trends in Microbiology", container_title="Trends in Microbiology"),
 )
 
+PREPRINT_JOURNALS: Sequence[JournalConfig] = (
+    JournalConfig(
+        key="arxiv",
+        name="arXiv",
+        container_title="arXiv",
+        constraint_field="PUBLISHER",
+    ),
+    JournalConfig(
+        key="biorxiv",
+        name="bioRxiv",
+        container_title="bioRxiv",
+        constraint_field="PUBLISHER",
+    ),
+)
+
 
 def normalise_key(label: str) -> str:
     """
@@ -59,17 +74,25 @@ def _tokenise(values: Iterable[str]) -> List[str]:
     return tokens
 
 
-def resolve_journals(user_values: Iterable[str] | None) -> List[JournalConfig]:
+def resolve_journals(
+    user_values: Iterable[str] | None,
+    *,
+    include_preprints: bool = False,
+) -> List[JournalConfig]:
     """
     Resolve user-supplied journal labels into search configurations.
     Unknown entries are treated as new journal definitions.
     """
 
+    base_journals = list(DEFAULT_JOURNALS)
+    if include_preprints:
+        base_journals.extend(PREPRINT_JOURNALS)
+
     if not user_values:
-        return list(DEFAULT_JOURNALS)
+        return base_journals
 
     canonical_lookup = {}
-    for journal in DEFAULT_JOURNALS:
+    for journal in list(DEFAULT_JOURNALS) + list(PREPRINT_JOURNALS):
         canonical_lookup[journal.key.lower()] = journal
         canonical_lookup[journal.name.lower()] = journal
         canonical_lookup[journal.container_title.lower()] = journal
@@ -80,6 +103,9 @@ def resolve_journals(user_values: Iterable[str] | None) -> List[JournalConfig]:
     if any(token.lower() == "all" for token in tokens):
         for journal in DEFAULT_JOURNALS:
             resolved[journal.container_title] = journal
+        if include_preprints:
+            for journal in PREPRINT_JOURNALS:
+                resolved[journal.container_title] = journal
 
     for token in tokens:
         lowered = token.lower()

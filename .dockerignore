@@ -1,0 +1,9 @@
+.git
+.pixi
+__pycache__
+*.py[cod]
+.env
+env/
+venv/
+.venv/
+.DS_Store

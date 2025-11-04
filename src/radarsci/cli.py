@@ -22,7 +22,7 @@ from rich.progress import (
 )
 
 from .fetcher import EuropePMCFetchResult, EuropePMCFetcher, USER_AGENT
-from .journals import resolve_journals, DEFAULT_JOURNALS
+from .journals import DEFAULT_JOURNALS, PREPRINT_JOURNALS, resolve_journals
 from .models import JournalConfig, Paper
 from .relevance import compute_relevance
 from .reporting import render_cli_report, write_html_report
@@ -196,17 +196,22 @@ def radar(
         help="Journal key or name to exclude (repeatable). Useful with --journal all.",
         show_default=False,
     ),
+    include_preprints: bool = typer.Option(
+        False,
+        "--include-preprints",
+        help="Add arXiv and bioRxiv to the selected journals (including --journal all).",
+    ),
 ) -> None:
     """
     Surface the most relevant recent papers for the chosen journals.
     """
 
     keyword_list = _normalise_keywords(keywords)
-    journal_configs = resolve_journals(journals)
+    journal_configs = resolve_journals(journals, include_preprints=include_preprints)
     if skip_journals:
         skip_lookup: set[str] = set()
         canonical = {}
-        for journal in DEFAULT_JOURNALS:
+        for journal in list(DEFAULT_JOURNALS) + list(PREPRINT_JOURNALS):
             canonical[journal.key.lower()] = journal.name.lower()
             canonical[journal.name.lower()] = journal.name.lower()
             canonical[journal.container_title.lower()] = journal.name.lower()

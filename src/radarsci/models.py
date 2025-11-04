@@ -18,6 +18,8 @@ class JournalConfig:
     key: str
     name: str
     container_title: str
+    constraint_field: str = "JOURNAL"
+    date_field: str = "FIRST_PDATE"
 
 
 @dataclass
@@ -40,4 +42,4 @@ class Paper:
     def formatted_date(self) -> str:
         if not self.published:
             return "Unknown"
-        return self.published.strftime("%Y-%m-%d")
+        return self.published.strftime("%A, %Y-%m-%d")
