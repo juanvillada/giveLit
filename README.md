@@ -66,26 +66,14 @@ Peek at the neon HTML cards via [this live preview](https://htmlpreview.github.i
 
 ### Docker usage
 
-**Build & tag**
-
-```bash
-# build from the local checkout
-docker build -t astrogenomics/givelit:dev .
-
-# run the CLI help locally
-docker run --rm -it astrogenomics/givelit:dev --help
-```
-
-**Run searches**
-
 ```bash
 # CLI output (non-interactive runs default to 244 cols; override with GIVELIT_CONSOLE_WIDTH)
-docker run --rm astrogenomics/givelit:dev --keyword "gut microbiome" --journal all --limit 10
+docker run --rm astrogenomics/givelit:latest --keyword "gut microbiome" --journal all --limit 10
 
 # Generate an HTML report and persist it on the host
 docker run --rm \
   -v "$(pwd)/givelit-reports:/app/givelit-reports" \
-  astrogenomics/givelit:dev \
+  astrogenomics/givelit:latest \
   --keyword metagenomics \
   --journal "Nature Microbiology" \
   --limit 5 \
@@ -93,37 +81,33 @@ docker run --rm \
   --output givelit-reports/metagenomics.html
 ```
 
-**Publish to Docker Hub**
+## Shifter
 
 ```bash
-# authenticate once (or rely on CI secrets)
-docker login -u astrogenomics
+# pull the Docker Hub image into Shifter (note the docker: prefix)
+shifterimg pull docker:astrogenomics/givelit:latest
 
-# tag the dev build for release and push
-docker tag astrogenomics/givelit:dev astrogenomics/givelit:v0.2.0
-docker tag astrogenomics/givelit:dev astrogenomics/givelit:latest
-docker push astrogenomics/givelit:v0.2.0
-docker push astrogenomics/givelit:latest
-
-# external users: pull and run from Docker Hub
-docker pull astrogenomics/givelit:latest
-docker run --rm astrogenomics/givelit --keyword "gut microbiome" --journal all --limit 10
-docker run --rm \
-  -v "$(pwd)/givelit-reports:/app/givelit-reports" \
-  astrogenomics/givelit \
-  --keyword metagenomics \
-  --journal "Nature Microbiology" \
-  --limit 5 \
-  --format web \
-  --output givelit-reports/metagenomics.html
+# invoke the container entrypoint directly so the pixi env is activated
+shifter --image=docker:astrogenomics/givelit:latest -- /app/entrypoint.sh --help
+shifter --image=docker:astrogenomics/givelit:latest -- /app/entrypoint.sh \
+  --keyword "gut microbiome" \
+  --journal all \
+  --limit 10
 ```
 
-GitHub releases automatically push multi-arch tags (`latest`, `vX.Y.Z`) via `.github/workflows/container-release.yml`. For one-off experiments, swap in your own namespace:
+## Apptainer (Singularity)
 
 ```bash
-docker buildx build --push \
-  --platform linux/amd64,linux/arm64 \
-  --tag yourhandle/givelit:pr123 .
+# grab the Docker image and convert it into a local SIF
+apptainer pull givelit_latest.sif docker://astrogenomics/givelit:latest
+apptainer pull docker://astrogenomics/givelit:latest
+
+# execute the bundled entrypoint so the pixi environment loads automatically
+apptainer exec givelit_latest.sif /app/entrypoint.sh --help
+apptainer exec givelit_latest.sif /app/entrypoint.sh \
+  --keyword "gut microbiome" \
+  --journal all \
+  --limit 10
 ```
 
 ## Custom searches
@@ -275,3 +259,28 @@ Articles are grouped per journal and interleaved to guarantee that every request
 ## Contact
 
 For questions or feedback, reach out to Juan at juanv@linux.com
+
+## Publishing the Docker image
+
+```bash
+docker login -u astrogenomics
+
+docker buildx build --push \
+  --platform linux/amd64,linux/arm64 \
+  --tag astrogenomics/givelit:latest .
+
+docker pull astrogenomics/givelit:latest
+
+docker run --rm -it astrogenomics/givelit:latest --help
+
+docker run --rm astrogenomics/givelit:latest --keyword "gut microbiome" --journal all --limit 10
+
+docker run --rm \
+  -v "$(pwd)/givelit-reports:/app/givelit-reports" \
+  astrogenomics/givelit:latest \
+  --keyword metagenomics \
+  --journal "Nature Microbiology" \
+  --limit 5 \
+  --format web \
+  --output givelit-reports/metagenomics.html
+```

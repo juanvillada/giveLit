@@ -1,4 +1,14 @@
-FROM ghcr.io/prefix-dev/pixi:0.59.0 AS build
+FROM ubuntu:24.04 AS build
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV PIXI_HOME=/opt/pixi \
+    PATH="/opt/pixi/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://pixi.sh/install.sh | sh
 
 WORKDIR /app
 
@@ -17,6 +27,15 @@ RUN { \
     echo "#!/bin/bash"; \
     echo "set -euo pipefail"; \
     cat /tmp/shell-hook; \
+    echo 'DEFAULT_CAFILE="/etc/ssl/certs/ca-certificates.crt"'; \
+    echo 'if [[ -n "${SSL_CERT_FILE:-}" && ! -f "$SSL_CERT_FILE" ]]; then'; \
+    echo '  export SSL_CERT_FILE="${DEFAULT_CAFILE}"'; \
+    echo 'elif [[ -z "${SSL_CERT_FILE:-}" ]]; then'; \
+    echo '  export SSL_CERT_FILE="${DEFAULT_CAFILE}"'; \
+    echo 'fi'; \
+    echo 'if [[ -n "${SSL_CERT_DIR:-}" && ! -d "$SSL_CERT_DIR" ]]; then'; \
+    echo '  unset SSL_CERT_DIR'; \
+    echo 'fi'; \
     echo 'if [[ $# -eq 0 || "$1" == -* ]]; then'; \
     echo '  set -- python -m givelit "$@"'; \
     echo 'fi'; \
@@ -28,6 +47,10 @@ RUN { \
 FROM ubuntu:24.04 AS runtime
 
 WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # reuse the exact pixi environment built in the previous stage
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
